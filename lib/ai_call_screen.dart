@@ -61,6 +61,7 @@ class _CallScreenState extends State<CallScreen> {
   Future<void> _callGPT() async {
     print('질문 : ' + _text);
     String answer = await callGPTApi(_text);
+    setState(() => _text = "");
     print('답변 : ' + answer);
     await Tts.speak(answer);
     setState(() => _isListening = true);
@@ -92,11 +93,12 @@ class _CallScreenState extends State<CallScreen> {
     if (available) {
       _speech.listen(
         localeId: 'ko_KR',
-        onResult: (result) =>
+        onResult: (result) {
           setState(() {
             _text = result.recognizedWords;
             _confidence = result.confidence;
-          }),
+          });
+        },
       );
     } else {
       print('Speech recognition not available');
@@ -164,6 +166,10 @@ class _CallScreenState extends State<CallScreen> {
                   // 들어주기
                   await _listen();
                 } else {
+                  // 음성 인식 중이면 중단
+                  if (_speech.isListening) {
+                    await _speech.stop();
+                  }
                   // 물어보고 답변해주기
                   await _callGPT();
                 }
